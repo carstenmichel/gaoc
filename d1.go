@@ -19,33 +19,41 @@ const (
 )
 
 var (
-	direction = NORTH
-	long      = 0
-	lat       = 0
+	direction    = NORTH
+	long         = 0
+	lat          = 0
+	mylist       = list.New()
+	alreadyFound = false
 )
 
 func processToken(tok string) {
-	log.Printf("Length of token %v is %v\n", tok, len(tok))
 	dir := tok[0]
-	log.Printf("Parsed direction %v\n", dir)
 	rotate(dir)
 	steps := tok[1:]
-	log.Printf("Parsed %v steps to go \n", steps)
 	moveSteps(steps)
 }
 
 func moveSteps(st string) {
 	numberOfSteps, _ := strconv.Atoi(st)
-	switch direction {
-	case NORTH:
-		long = long + numberOfSteps
-	case SOUTH:
-		long = long - numberOfSteps
-	case WEST:
-		lat = lat + numberOfSteps
-	case EAST:
-		lat = lat - numberOfSteps
+	for index := 0; index < numberOfSteps; index++ {
+
+		switch direction {
+		case NORTH:
+			long = long + 1
+		case SOUTH:
+			long = long - 1
+		case WEST:
+			lat = lat + 1
+		case EAST:
+			lat = lat - 1
+		}
+
+		//	log.Printf("I am here: long %v lat %v\n", long, lat)
+		checkIfIWasAlreadyHere(long, lat)
+
+		mylist.PushBack(pair{long: long, lat: lat})
 	}
+
 }
 
 func rotate(direction byte) {
@@ -60,7 +68,6 @@ func rotate(direction byte) {
 }
 
 func turnRight() {
-	log.Print("Turn right")
 	switch direction {
 	case NORTH:
 		direction = EAST
@@ -76,7 +83,6 @@ func turnRight() {
 }
 
 func turnLeft() {
-	log.Print("Turn Left")
 	switch direction {
 	case NORTH:
 		direction = WEST
@@ -103,8 +109,21 @@ type pair struct {
 	lat  int
 }
 
-func d1Part1() {
+func checkIfIWasAlreadyHere(long, lat int) {
+	if alreadyFound == false {
+		for element := mylist.Front(); element != nil; element = element.Next() {
+			p := element.Value
+			if (p.(pair).lat == lat) && (p.(pair).long == long) {
+				away := abs(long) + abs(lat)
+				log.Printf("Shortpath (2nd part of puzzle), %v steps away\n", away)
+				alreadyFound = true
+			}
+		}
+	}
+}
 
+func d1Part1() {
+	mylist.PushBack(pair{long: 0, lat: 0})
 	log.Printf("Day 1\n")
 	dat, err := ioutil.ReadFile("input/d1.txt")
 	if err != nil {
@@ -112,15 +131,11 @@ func d1Part1() {
 	}
 	commandstring := string(dat)
 
-	mylist := list.New()
 	commands := strings.Split(commandstring, ",")
 	for _, element := range commands {
 		processToken(strings.Trim(element, " \n\r"))
-		mylist.PushBack(pair{long: long, lat: lat})
 	}
 
-	log.Printf("Direction is now %v\n", direction)
-	log.Printf("Long is %v, Lat is %v\n", long, lat)
 	res := abs(long) + abs(lat)
-	log.Printf("Day1 Puzzle Part 1 result is  %v\n", res)
+	log.Printf("Day 1 Puzzle Part 1 result is  %v\n", res)
 }
