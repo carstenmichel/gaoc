@@ -24,6 +24,7 @@ var (
 	lat          = 0
 	mylist       = list.New()
 	alreadyFound = false
+	shortPath    = 0
 )
 
 func processToken(tok string) {
@@ -116,13 +117,14 @@ func checkIfIWasAlreadyHere(long, lat int) {
 			if (p.(pair).lat == lat) && (p.(pair).long == long) {
 				away := abs(long) + abs(lat)
 				log.Printf("Shortpath (2nd part of puzzle), %v steps away\n", away)
+				shortPath = away
 				alreadyFound = true
 			}
 		}
 	}
 }
 
-func d1Part1() {
+func d1Part1() (int, int) {
 	mylist.PushBack(pair{long: 0, lat: 0})
 	log.Printf("Day 1\n")
 	dat, err := ioutil.ReadFile("input/d1.txt")
@@ -138,4 +140,5 @@ func d1Part1() {
 
 	res := abs(long) + abs(lat)
 	log.Printf("Day 1 Puzzle Part 1 result is  %v\n", res)
+	return shortPath, res
 }
