@@ -8,5 +8,8 @@ func TestD03(t *testing.T) {
 	if first != 993 {
 		t.Fatalf("First Puzzle wrong with %v\n", first)
 	}
-
+	second := d03Part2()
+	if second != 1849 {
+		t.Fatalf("Second Puzzle wrong with %v\n", first)
+	}
 }
