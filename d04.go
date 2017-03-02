@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"log"
 	"os"
 	"regexp"
@@ -12,7 +13,9 @@ import (
 
 var (
 	sumOfSectors = 0
+	secretSector = 0
 	re           = regexp.MustCompile("(.*)-([0-9]+)\\[([a-z]*)\\]")
+	northPole    = regexp.MustCompile(".*north.*")
 )
 
 // KeyValuePair hold a Character and its number of occurence
@@ -40,6 +43,28 @@ func (ac AllCharacters) Less(i, j int) bool {
 
 func (ac AllCharacters) Swap(i, j int) {
 	ac[i], ac[j] = ac[j], ac[i]
+}
+
+func decipherd04(riddle string, shiftLevel int) {
+	sl := shiftLevel % 26
+	var buffer bytes.Buffer
+	for _, c := range riddle {
+		var ci = int(c)
+		if c == 0x2d {
+			ci = 0x20
+		} else {
+			ci = ci + sl
+			if ci > 0x7a {
+				ci = ci - 26
+			}
+		}
+		buffer.WriteByte(byte(ci))
+	}
+	deciphered := buffer.String()
+	if len(northPole.FindStringIndex(deciphered)) > 0 {
+		secretSector = shiftLevel
+	}
+
 }
 
 func processd04(line string) {
@@ -73,11 +98,12 @@ func processd04(line string) {
 		if err != nil {
 			log.Fatalf("Sectorid %v could not be parsed\n", elements[2])
 		}
+		decipherd04(elements[1], sectorid)
 		sumOfSectors = sumOfSectors + sectorid
 	}
 }
 
-func d04() int {
+func d04() (int, int) {
 	log.Printf("Day 4\n")
 
 	file, err := os.Open("input/d04.txt")
@@ -94,5 +120,6 @@ func d04() int {
 
 	}
 	log.Printf("Number of Sectors  %v\n", sumOfSectors)
-	return sumOfSectors
+	log.Printf("Secret Sector  %v\n", secretSector)
+	return sumOfSectors, secretSector
 }
