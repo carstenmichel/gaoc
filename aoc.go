@@ -1,5 +1,5 @@
 package main
 
 func main() {
-	d05()
+	d06()
 }

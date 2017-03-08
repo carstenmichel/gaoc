@@ -72,8 +72,8 @@ func processd04(line string) {
 
 	codeonly := strings.Replace(elements[1], "-", "", -1)
 	singleCharacters := strings.Split(codeonly, "")
-	var m map[string]int
-	m = make(map[string]int)
+	//var m map[string]int
+	m := make(map[string]int)
 	for _, element := range singleCharacters {
 		s := element
 		m[s] = m[s] + 1
