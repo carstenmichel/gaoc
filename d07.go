@@ -9,6 +9,7 @@ import (
 
 var (
 	tls int
+	ssl int
 )
 
 func hasAnna(anna string) bool {
@@ -19,10 +20,31 @@ func hasAnna(anna string) bool {
 	}
 	return false
 }
+func checkd07SSL(inner []string, outer []string) {
+	thisLineHasSSL := false
+	for index := 0; index < len(outer); index++ {
+		outerString := outer[index]
+		for outCounter := 0; outCounter < (len(outerString) - 2); outCounter++ {
+			if outerString[outCounter] == outerString[outCounter+2] && outerString[outCounter] != outerString[outCounter+1] {
+				aa := outerString[outCounter]
+				bb := outerString[outCounter+1]
+				for i2 := 0; i2 < len(inner); i2++ {
+					innerString := inner[i2]
+					for inCounter := 0; inCounter < (len(innerString) - 2); inCounter++ {
+						if innerString[inCounter] == bb && innerString[inCounter+1] == aa && innerString[inCounter+2] == bb {
+							thisLineHasSSL = true
+						}
+					}
+				}
+			}
+		}
+	}
+	if thisLineHasSSL {
+		ssl = ssl + 1
+	}
+}
 
 func processD07Line(in string) {
-	log.Printf("------------------------")
-	log.Printf("Inspect: %v\n", in)
 	work := in
 	outer := []string{}
 	inner := []string{}
@@ -32,7 +54,6 @@ func processD07Line(in string) {
 		delimiter := 0
 		if isOutside {
 			delimiter = strings.Index(work, "[")
-			log.Printf("Delimiter for outside is %v\n", delimiter)
 			if delimiter == -1 {
 				outer = append(outer, work)
 				break
@@ -41,33 +62,34 @@ func processD07Line(in string) {
 			isOutside = false
 		} else {
 			delimiter = strings.Index(work, "]")
-			log.Printf("Delimiter for inside is %v\n", delimiter)
 			inner = append(inner, work[:delimiter])
 			isOutside = true
 		}
 		work = work[delimiter+1:]
-		log.Printf("remains: %v\n", work)
 		index = delimiter + 1
 
 	}
-	log.Printf("Outside %v\n", outer)
-	log.Printf("Inner %v\n", inner)
-	// if inner has annagram then fail
+	hasInnerAbba := false
+	hasOuterAbba := false
 	for index := 0; index < len(inner); index++ {
 		if hasAnna(inner[index]) {
-			return
+			hasInnerAbba = true
 		}
 	}
-	for index := 0; index < len(outer); index++ {
-		if hasAnna(outer[index]) {
-			tls = tls + 1
-			return
+	if hasInnerAbba == false {
+		for index := 0; index < len(outer); index++ {
+			if hasAnna(outer[index]) {
+				hasOuterAbba = true
+			}
 		}
 	}
-
+	if hasOuterAbba {
+		tls = tls + 1
+	}
+	checkd07SSL(inner, outer)
 }
 
-func d07() {
+func d07() (int, int) {
 	log.Printf("Day 7\n")
 
 	file, err := os.Open("input/d07.txt")
@@ -83,6 +105,8 @@ func d07() {
 		processD07Line(textLine)
 
 	}
-	log.Printf("TLS  %v\n", tls)
-	//return sumOfSectors, secretSector
+	log.Printf("TLS is %v\n", tls)
+	log.Printf("SSL is %v\n", ssl)
+
+	return tls, ssl
 }
