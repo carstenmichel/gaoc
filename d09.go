@@ -4,15 +4,17 @@ import (
 	"bufio"
 	"bytes"
 	"io"
+	"io/ioutil"
 	"log"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 )
 
 var (
-	countd09          = 0
-	completeStringd09 bytes.Buffer
+	countd09         = 0
+	countd09Version2 = 0
 )
 
 func processCompressed09(r *bufio.Reader) {
@@ -33,7 +35,6 @@ func processCompressed09(r *bufio.Reader) {
 	elements := strings.Split(headerString, "x")
 	amount, _ := strconv.Atoi(elements[1])
 	length, _ := strconv.Atoi(elements[0])
-	log.Printf("Repeat the following %v characters %v times\n", length, amount)
 	// read amount number of runes
 	countd09 = countd09 + (amount * length)
 
@@ -42,24 +43,15 @@ func processCompressed09(r *bufio.Reader) {
 		rr, _, _ := r.ReadRune()
 		otherBuffer.WriteRune(rr)
 	}
-	log.Printf("Other buffer is %v\n", otherBuffer.String())
-
-	for index := 0; index < amount; index++ {
-		completeStringd09.Write(otherBuffer.Bytes())
-	}
 }
 
-func d09() {
-	log.Printf("Day 9\n")
-
+func d09() int {
 	file, err := os.Open("input/d09.txt")
 	if err != nil {
 		log.Fatalf("Failed to read input file %v \n", err)
 	}
-	log.Printf("%v", file.Name())
 	defer file.Close()
 	reader := bufio.NewReader(file)
-
 	for {
 		rune, _, err := reader.ReadRune()
 		if err == io.EOF {
@@ -68,24 +60,68 @@ func d09() {
 		} else if err != nil {
 			log.Fatalf("Rune could not be read %v\n", err)
 		}
-		//log.Printf("%v byte avail\n", string(rune))
 
 		if rune == 0x28 {
-			//process processed
 			processCompressed09(reader)
-
 		} else {
-			//process uncompressed
-			//	log.Printf("%v", string(rune))
 			if rune == 0x0a {
-				//ignore linefeed
 				break
 			}
 			countd09++
-			completeStringd09.WriteRune(rune)
 		}
 	}
-	log.Printf("CompleteString is \n%v", completeStringd09.String())
-	log.Printf("Total number of characters is %v \n", countd09)
-	log.Printf("Completelength is %v \n", completeStringd09.Len())
+	log.Printf("Decompressed Version 1 %v \n", countd09)
+	return countd09
+}
+
+// Part 2
+/**
+  Called for starting of a new Block
+*/
+
+func decompress(str string, recursionLevel int) (length int) {
+	var index int
+	theMultiplierPattern := regexp.MustCompile("\\(([0-9x]*)\\)")
+
+	for index < len(str) {
+		// Search for start Character
+		if str[index] == '(' {
+			//	log.Printf("Recursion Level %v\n", recursionLevel)
+
+			// extract Header info
+			theMultiplier := theMultiplierPattern.FindStringSubmatch(str[index:])[1]
+			nums := strings.Split(theMultiplier, "x")
+
+			count, _ := strconv.Atoi(nums[0])
+			repetitions, _ := strconv.Atoi(nums[1])
+			//log.Printf("Multiply %v chars exactly %v times\n", count, repetitions)
+
+			// find substring to process
+			recursionStart := index + len(theMultiplier) + 2
+			recursionString := str[recursionStart : recursionStart+count]
+			//log.Printf("Now recurse substring %v\n", recursionString)
+			length += decompress(recursionString, recursionLevel+1) * repetitions
+			index += count + len(theMultiplier) + 2
+		} else {
+			length++
+			index++
+		}
+	}
+	countd09Version2 = length
+
+	return length
+}
+
+func d09part2() int {
+	input, _ := ioutil.ReadFile("input/d09.txt")
+	rc := decompress(string(input), 1)
+	rc = rc - 1
+	log.Printf("d09 count2 = %v\n", rc)
+	return rc
+}
+
+func d09Main() {
+	log.Printf("Day 9\n")
+	d09()
+	d09part2()
 }
